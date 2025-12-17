@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Казино-Ракетка</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .balance {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+        }
+        
+        .game-title {
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #ff0080;
+        }
+        
+        .rocket-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        #rocket {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 120px;
+            transition: bottom 0.1s;
+            z-index: 2;
+        }
+        
+        .rocket-body {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, #ff3333, #ff6600);
+            border-radius: 10px 10px 5px 5px;
+            position: relative;
+        }
+        
+        .rocket-flame {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(to bottom, #ff9900, #ff3300);
+            border-radius: 50% 50% 0 0;
+            animation: flame 0.3s infinite;
+        }
+        
+        @keyframes flame {
+            0%, 100% { height: 40px; }
+            50% { height: 50px; }
+        }
+        
+        .obstacle {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #00ccff;
+            border-radius: 10px;
+            top: -50px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-start {
+            background: linear-gradient(45deg, #00ff88, #00cc66);
+            color: #000;
+        }
+        
+        .btn-start:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00ff88;
+        }
+        
+        .btn-stop {
+            background: linear-gradient(45deg, #ff3333, #cc0000);
+            color: white;
+        }
+        
+        .btn-stop:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #ff3333;
+        }
+        
+        .bet-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+        
+        .bet-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: #00ccff;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .bet-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+            min-width: 100px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+            margin-top: 5px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 255, 136, 0.9);
+            color: #000;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            z-index: 1001;
+            border: 3px solid #ff0080;
+        }
+        
+        .result-text {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #00ff88;
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+    
+    <div class="game-over" id="gameOver">
+        <div class="result-text" id="resultText"></div>
+        <button class="btn btn-start" onclick="restartGame()">Играть снова</button>
+    </div>
+    
+    <div class="container">
+        <div class="header">
+            <div>🎮 Игрок</div>
+            <div class="balance">💰 <span id="balance">1000</span></div>
+        </div>
+        
+        <h1 class="game-title">🚀 КАЗИНО-РАКЕТКА</h1>
+        
+        <div class="rocket-container" id="gameArea">
+            <div id="rocket">
+                <div class="rocket-body">
+                    <div class="rocket-flame"></div>
+                </div>
+            </div>
+            <!-- Препятствия будут добавляться через JS -->
+        </div>
+        
+        <div class="bet-controls">
+            <button class="bet-btn" onclick="changeBet(-100)">-</button>
+            <div class="bet-amount">💰 <span id="betAmount">100</span></div>
+            <button class="bet-btn" onclick="changeBet(100)">+</button>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-start" onclick="startGame()" id="startBtn">СТАРТ</button>
+            <button class="btn btn-stop" onclick="stopGame()" id="stopBtn" disabled>СТОП</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div>Высота</div>
+                <div class="stat-value" id="heightValue">0м</div>
+            </div>
+            <div class="stat-box">
+                <div>Множитель</div>
+                <div class="stat-value" id="multiplierValue">x1.00</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Telegram Web App инициализация
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.hide();
+        
+        // Игровые переменные
+        let balance = 1000;
+        let bet = 100;
+        let gameActive = false;
+        let rocketHeight = 50;
+        let rocketSpeed = 0;
+        let gameInterval;
+        let obstacles = [];
+        let multiplier = 1.0;
+        let obstacleSpeed = 2;
+        let obstacleTimer = 0;
+        let gameTime = 0;
+        
+        // Элементы DOM
+        const rocket = document.getElementById('rocket');
+        const gameArea = document.getElementById('gameArea');
+        const balanceEl = document.getElementById('balance');
+        const betAmountEl = document.getElementById('betAmount');
+        const heightValueEl = document.getElementById('heightValue');
+        const multiplierValueEl = document.getElementById('multiplierValue');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const notification = document.getElementById('notification');
+        const gameOver = document.getElementById('gameOver');
+        const resultText = document.getElementById('resultText');
+        
+        // Функции уведомлений
+        function showNotification(message, color = '#00ff88') {
+            notification.textContent = message;
+            notification.style.background = color;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
+        }
+        
+        // Изменение ставки
+        function changeBet(amount) {
+            if (gameActive) return;
+            
+            const newBet = bet + amount;
+            if (newBet >= 10 && newBet <= balance) {
+                bet = newBet;
+                updateDisplay();
+                showNotification(`Ставка: ${bet}`, '#00ccff');
+            }
+        }
+        
+        // Обновление отображения
+        function updateDisplay() {
+            balanceEl.textContent = balance;
+            betAmountEl.textContent = bet;
+            heightValueEl.textContent = `${rocketHeight}m`;
+            multiplierValueEl.textContent = `x${multiplier.toFixed(2)}`;
+            rocket.style.bottom = `${rocketHeight}px`;
+        }
+        
+        // Создание препятствия
+        function createObstacle() {
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            obstacle.style.left = `${Math.random() * 360}px`;
+            obstacle.style.top = '-50px';
+            obstacle.dataset.speed = obstacleSpeed;
+            gameArea.appendChild(obstacle);
+            obstacles.push({
+                element: obstacle,
+                y: -50,
+                x: parseInt(obstacle.style.left)
+            });
+        }
+        
+        // Обновление препятствий
+        function updateObstacles() {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                obs.y += obstacleSpeed;
+                obs.element.style.top = `${obs.y}px`;
+                
+                // Проверка столкновения
+                if (obs.y > rocketHeight && obs.y < rocketHeight + 120 && 
+                    obs.x > 180 && obs.x < 240) {
+                    endGame(false);
+                    return;
+                }
+                
+                // Удаление вышедших за пределы
+                if (obs.y > 350) {
+                    gameArea.removeChild(obs.element);
+                    obstacles.splice(i, 1);
+                }
+            }
+        }
+        
+        // Старт игры
+        function startGame() {
+            if (gameActive || bet > balance) return;
+            
+            balance -= bet;
+            gameActive = true;
+            rocketHeight = 50;
+            rocketSpeed = 0;
+            obstacles = [];
+            multiplier = 1.0;
+            gameTime = 0;
+            obstacleSpeed = 2;
+            obstacleTimer = 0;
+            
+            // Очистка старых препятствий
+            document.querySelectorAll('.obstacle').forEach(obs => obs.remove());
+            
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            
+            showNotification('Ракета запущена!', '#00ff88');
+            
+            gameInterval = setInterval(() => {
+                gameTime++;
+                
+                // Обновление высоты и множителя
+                rocketSpeed += 0.05;
+                rocketHeight += rocketSpeed;
+                multiplier = 1.0 + (rocketHeight - 50) / 100;
+                
+                // Создание препятствий
+                obstacleTimer++;
+                if (obstacleTimer > 30 - Math.min(20, rocketSpeed * 2)) {
+                    createObstacle();
+                    obstacleTimer = 0;
+                    obstacleSpeed = 2 + rocketSpeed * 0.5;
+                }
+                
+                updateObstacles();
+                updateDisplay();
+                
+                // Авто-стоп на высоте 500
+                if (rocketHeight >= 500) {
+                    endGame(true);
+                }
+            }, 50);
+        }
+        
+        // Остановка игры (ручная)
+        function stopGame() {
+            if (!gameActive) return;
+            
+            clearInterval(gameInterval);
+            gameActive = false;
+            
+            const winAmount = Math.floor(bet * multiplier);
+            balance += winAmount;
+            
+            showNotification(`Вы выиграли: ${winAmount}!`, '#00ff88');
+            
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            
+            // Показываем результат
+            resultText.textContent = `Выигрыш: ${winAmount} (x${multiplier.toFixed(2)})`;
+            gameOver.style.display = 'block';
+        }
+        
+        // Конец игры (столкновение или достижение макс высоты)
+        function endGame(success) {
+            clearInterval(gameInterval);
+            gameActive = false;
+            
+            if (success) {
+                const winAmount = Math.floor(bet * multiplier);
+                balance += winAmount;
+                resultText.textContent = `МАКСИМАЛЬНАЯ ВЫСОТА! Выигрыш: ${winAmount}`;
+                resultText.style.color = '#00ff88';
+            } else {
+                resultText.textContent = 'СТОЛКНОВЕНИЕ! Вы проиграли';
+                resultText.style.color = '#ff3333';
+            }
+            
+            gameOver.style.display = 'block';
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            
+            updateDisplay();
+            
+            // Отправка данных в бота
+            sendGameResult(success);
+        }
+        
+        // Рестарт игры
+        function restartGame() {
+            gameOver.style.display = 'none';
+            updateDisplay();
+        }
+        
+        // Отправка результата в бота
+        function sendGameResult(success) {
+            const userId = tg.initDataUnsafe.user?.id;
+            if (!userId) return;
+            
+            const result = {
+                user_id: userId,
+                success: success,
+                bet: bet,
+                multiplier: multiplier.toFixed(2),
+                final_balance: balance,
+                timestamp: Date.now()
+            };
+            
+            // Здесь должен быть fetch запрос к вашему боту
+            // fetch(`https://api.telegram.org/bot8200048013:AAFywhdGubiQ7T-iJNBnflAd6igr0nsY1Fk/sendGameResult`, {
+            //     method: 'POST',
+            //     headers: {'Content-Type': 'application/json'},
+            //     body: JSON.stringify(result)
+            // });
+            
+            console.log('Game result:', result);
+        }
+        
+        // Обработка нажатий клавиш
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && gameActive) {
+                stopGame();
+            }
+        });
+        
+        // Инициализация
+        updateDisplay();
+        showNotification('Добро пожаловать в Казино-Ракетку!', '#ff0080');
+    </script>
+</body>
+</html>
